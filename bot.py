@@ -1,12 +1,12 @@
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 import requests
 import os
 import logging
 
 app = Flask(__name__)
 
-# Logging setup
-logging.basicConfig(level=logging.INFO)
+# Logging setup (only show errors)
+logging.basicConfig(level=logging.ERROR)
 
 # Load environment variables
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN", "YOUR_PAGE_ACCESS_TOKEN")
@@ -17,6 +17,11 @@ FB_URL = f"https://graph.facebook.com/v12.0/me/messages?access_token={PAGE_ACCES
 
 # Bot Memory (To track group activity)
 group_memory = {}
+
+# 📌 Fix: Ignore favicon requests
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204  # No content response (prevents 404 error)
 
 # Function to send messages
 def send_message(recipient_id, text):
@@ -40,7 +45,6 @@ def verify_webhook():
 @app.route("/webhook", methods=["POST"])
 def receive_message():
     data = request.get_json()
-    logging.info(f"Received data: {data}")
 
     if data.get("object") == "page":
         for entry in data.get("entry", []):
