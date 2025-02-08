@@ -1,47 +1,44 @@
 from flask import Flask, request
 import requests
 
-# Flask App Setup
 app = Flask(__name__)
 
-# Facebook Page Access Token (Yaha apna token daalo)
+# Facebook Page Access Token aur Verify Token
 PAGE_ACCESS_TOKEN = "YOUR_PAGE_ACCESS_TOKEN"
 VERIFY_TOKEN = "YOUR_VERIFY_TOKEN"
 
-# Function to send a message
-def send_message(recipient_id, message_text):
-    url = f"https://graph.facebook.com/v17.0/me/messages?access_token={PAGE_ACCESS_TOKEN}"
-    payload = {
-        "recipient": {"id": recipient_id},
-        "message": {"text": message_text}
-    }
+# Function to send message
+def send_message(recipient_id, text):
+    url = f"https://graph.facebook.com/v12.0/me/messages?access_token={PAGE_ACCESS_TOKEN}"
     headers = {"Content-Type": "application/json"}
-    requests.post(url, json=payload, headers=headers)
+    data = {
+        "recipient": {"id": recipient_id},
+        "message": {"text": text}
+    }
+    requests.post(url, json=data)
 
-# Webhook Verification (Facebook Webhook Setup ke liye)
+# Webhook for verification
 @app.route("/webhook", methods=["GET"])
 def verify_webhook():
-    if request.args.get("hub.verify_token") == VERIFY_TOKEN:
-        return request.args.get("hub.challenge")
-    return "Verification failed"
+    token_sent = request.args.get("hub.verify_token")
+    challenge = request.args.get("hub.challenge")
+    if token_sent == VERIFY_TOKEN:
+        return challenge
+    return "Verification token mismatch", 403
 
-# Handle Incoming Messages
+# Handling messages
 @app.route("/webhook", methods=["POST"])
-def handle_message():
+def receive_message():
     data = request.get_json()
-    if data["object"] == "page":
-        for entry in data["entry"]:
-            for message_event in entry["messaging"]:
-                if "message" in message_event:
-                    sender_id = message_event["sender"]["id"]
-                    message_text = message_event["message"]["text"]
-                    
-                    # Auto-reply logic
-                    reply_text = f"Hi! You said: {message_text}"
-                    send_message(sender_id, reply_text)
+    if data.get("object") == "page":
+        for entry in data.get("entry"):
+            messaging = entry.get("messaging", [])
+            for event in messaging:
+                if event.get("message"):
+                    sender_id = event["sender"]["id"]
+                    message_text = event["message"]["text"]
+                    send_message(sender_id, f"Bot: Aapne kaha '{message_text}'")
+    return "Message Processed", 200
 
-    return "OK", 200
-
-# Run Flask App
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
