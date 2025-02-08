@@ -1,4 +1,4 @@
-from flask import Flask, request, send_from_directory
+from flask import Flask, request
 import requests
 import os
 import logging
@@ -23,12 +23,17 @@ def send_message(recipient_id, text):
     }
     requests.post(url, json=data)
 
-# Favicon request ignore karne ke liye
+# 🔹 Root route for testing (Fixes 404 error)
+@app.route("/")
+def home():
+    return "Messenger Bot is Live!"
+
+# 🔹 Favicon request ignore karne ke liye
 @app.route('/favicon.ico')
 def favicon():
     return '', 204  # Empty response, no logging
 
-# Webhook verification ke liye
+# 🔹 Webhook verification ke liye
 @app.route("/webhook", methods=["GET"])
 def verify_webhook():
     token_sent = request.args.get("hub.verify_token")
@@ -37,7 +42,7 @@ def verify_webhook():
         return challenge
     return "Verification token mismatch", 403
 
-# Messenger se aane wale messages handle karein
+# 🔹 Messenger se aane wale messages handle karein
 @app.route("/webhook", methods=["POST"])
 def receive_message():
     data = request.get_json()
@@ -51,7 +56,7 @@ def receive_message():
                     send_message(sender_id, f"Bot: Aapne kaha '{message_text}'")
     return "Message Processed", 200
 
-# Flask App ko run karein
+# 🔹 Flask App ko run karein (Debug mode OFF)
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))  # Render ke liye PORT set karein
-    app.run(host="0.0.0.0", port=port, debug=False)  # Debug False taaki unwanted logs na aaye
+    app.run(host="0.0.0.0", port=port, debug=False)  # Debug mode OFF
