@@ -1,11 +1,12 @@
 from flask import Flask, request
 import requests
+import os  # Environment variables ke liye
 
 app = Flask(__name__)
 
 # Facebook Page Access Token aur Verify Token
-PAGE_ACCESS_TOKEN = "YOUR_PAGE_ACCESS_TOKEN"
-VERIFY_TOKEN = "YOUR_VERIFY_TOKEN"
+PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN", "YOUR_PAGE_ACCESS_TOKEN")
+VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "YOUR_VERIFY_TOKEN")
 
 # Function to send message
 def send_message(recipient_id, text):
@@ -41,4 +42,5 @@ def receive_message():
     return "Message Processed", 200
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    port = int(os.getenv("PORT", 10000))  # Default 10000
+    app.run(host="0.0.0.0", port=port, debug=True)
