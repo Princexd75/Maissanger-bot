@@ -1,8 +1,13 @@
 from flask import Flask, request, send_from_directory
 import requests
 import os
+import logging
 
 app = Flask(__name__)
+
+# Logging se favicon requests hide karne ke liye filter add karein
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)  # Sirf errors dikhenge, favicon request nahi
 
 # Environment Variables se tokens load karein
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN", "YOUR_PAGE_ACCESS_TOKEN")
@@ -18,10 +23,10 @@ def send_message(recipient_id, text):
     }
     requests.post(url, json=data)
 
-# Favicon.ico request handle karein (taaki 404 error na aaye)
+# Favicon request ignore karne ke liye
 @app.route('/favicon.ico')
 def favicon():
-    return '', 204  # Empty response with status 204 (No Content)
+    return '', 204  # Empty response, no logging
 
 # Webhook verification ke liye
 @app.route("/webhook", methods=["GET"])
@@ -49,4 +54,4 @@ def receive_message():
 # Flask App ko run karein
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))  # Render ke liye PORT set karein
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)  # Debug False taaki unwanted logs na aaye
